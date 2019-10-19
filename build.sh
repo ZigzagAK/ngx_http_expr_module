@@ -278,7 +278,7 @@ function download_dep() {
 }
 
 function extract_downloads() {
-  cd src
+  cd download
 
   for d in $(ls -1 *.tar.gz)
   do
@@ -293,16 +293,14 @@ function download() {
   mkdir -p $BUILD_DIR        2>>$ERR_LOG
   mkdir $BUILD_DIR/deps      2>>$ERR_LOG
 
-  mkdir src             2>>$ERR_LOG
+  mkdir download             2>>$ERR_LOG
 
-  cd src
+  cd download
 
   download_dep http://nginx.org/download                                           nginx     $VERSION           tar.gz
   download_dep http://ftp.cs.stanford.edu/pub/exim/pcre                            pcre      $PCRE_VERSION      tar.gz
   download_dep http://zlib.net                                                     zlib      $ZLIB_VERSION      tar.gz
 
-  download_module ZigzagAK    ngx_dynamic_upstream             master
-  download_module ZigzagAK    ngx_dynamic_healthcheck          master
   download_module openresty   echo-nginx-module                master
 
   cd ..
@@ -379,8 +377,6 @@ if [ $download_only -eq 0 ]; then
   fi
   build
 fi
-
-cp LICENSE "$INSTALL_PREFIX/nginx-$VERSION$SUFFIX/LICENSE"
 
 cd "$DIR"
 
