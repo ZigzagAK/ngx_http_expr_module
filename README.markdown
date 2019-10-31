@@ -69,6 +69,19 @@ http {
 Configuration directives
 ========================
 
+expr_if_empty
+-------------
+* **syntax**: `expr_if_empty $var <complex value>`
+* **context**: `location`
+
+Declare complex variable with lazy computation.
+
+In runtime set value if variable is empty.
+
+Directive is not support inheritance.
+
+[Back to TOC](#table-of-contents)
+
 expr
 ----
 * **syntax**: `expr $var <complex value>`
