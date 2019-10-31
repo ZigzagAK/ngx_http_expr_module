@@ -13,6 +13,7 @@ typedef struct {
 typedef struct {
     ngx_http_expr_loc_conf_t  *elcf;
     ngx_http_complex_value_t   cv;
+    ngx_flag_t                 if_empty;
     size_t                     len;
     u_char                     data[1];
 } ngx_http_expr_t;
@@ -44,6 +45,13 @@ ngx_http_expr(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static ngx_command_t  ngx_http_expr_commands[] = {
 
     { ngx_string("expr"),
+      NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
+      ngx_http_expr,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("expr_if_empty"),
       NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_http_expr,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -116,10 +124,12 @@ ngx_http_expr_get_raw(ngx_http_request_t *r,
     expr = ngx_hash_find(&v->hash, elcf->hash, elcf->key.data, elcf->key.len);
     if (expr != NULL) {
 
-        vv->data = (u_char *) &expr->data;
-        vv->len = expr->len;
-        vv->valid = 1;
-        vv->not_found = 0;
+        if (!vv->valid || !expr->if_empty) {
+            vv->data = (u_char *) &expr->data;
+            vv->len = expr->len;
+            vv->valid = 1;
+            vv->not_found = 0;
+        }
 
         return NGX_OK;
     }
@@ -186,6 +196,7 @@ ngx_http_expr(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_compile_complex_value_t    ccv;
     ngx_http_expr_var_t                *v;
     ngx_http_expr_t                    *expr;
+    static ngx_str_t                    if_empty = ngx_string("expr_if_empty");
 
     if (args[1].data[0] != '$') {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -240,6 +251,8 @@ ngx_http_expr(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     ngx_hash_add_key(&v->keys, &elcf->key, expr, NGX_HASH_READONLY_KEY);
+
+    expr->if_empty = ngx_memn2cmp(args[0].data, if_empty.data, args[0].len, if_empty.len) == 0;
 
     expr->len = args[2].len;
     ngx_memcpy(&expr->data, args[2].data, args[2].len);
