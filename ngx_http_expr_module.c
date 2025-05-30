@@ -220,8 +220,16 @@ ngx_http_expr(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (var == NULL)
         return NGX_CONF_ERROR;
 
-    if (elcf->vars.nelts == 1024) {
-        ngx_conf_log_error(NGX_LOG_ERR, cf, 0, "only 1024 expressions per location is supported");
+    if (elcf->vars.elts == NULL) {
+        if (ngx_array_init(&elcf->vars, cf->pool, 16, sizeof(ngx_http_expr_var_t))
+                == NGX_ERROR) {
+            ngx_conf_log_error(NGX_LOG_CRIT, cf, 0, "no memory");
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    if (elcf->vars.nelts == 16) {
+        ngx_conf_log_error(NGX_LOG_ERR, cf, 0, "only 16 expressions per location is supported");
         return NGX_CONF_ERROR;
     }
 
@@ -297,12 +305,6 @@ ngx_http_expr_create_loc_conf(ngx_conf_t *cf)
 
     elcf = ngx_pcalloc(cf->pool, sizeof(ngx_http_expr_loc_conf_t));
     if (elcf == NULL) {
-        ngx_conf_log_error(NGX_LOG_CRIT, cf, 0, "no memory");
-        return NULL;
-    }
-
-    if (ngx_array_init(&elcf->vars, cf->pool, 1024, sizeof(ngx_http_expr_var_t))
-            == NGX_ERROR) {
         ngx_conf_log_error(NGX_LOG_CRIT, cf, 0, "no memory");
         return NULL;
     }
